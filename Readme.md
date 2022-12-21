@@ -13,9 +13,9 @@ Wikipedia「[M-1グランプリ](https://ja.wikipedia.org/wiki/M-1%E3%82%B0%E3%8
 
 TODO
 
-## 残タスク
+## タスクリスト
 
-- spreadsheetにあるデータの前処理
+- [完了] spreadsheetにあるデータの前処理
 - 順位ベースの点数に変換・集計
 - 決勝進出者の変化を表示
 
