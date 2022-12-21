@@ -1,23 +1,23 @@
 ---
 title: "M1データの前処理"
-format: html
+format: markdown
 editor: visual
 ---
 
 ## M1審査の課題
 
-審査員が1人だけ分散が大きな評価をすると、その人の評価点で順位が決まってしまいます。
+審査員の点数の付け方に基準がありません。そのため、審査員の１人が、極端に分散が大きな評価点の付け方をすると、その人の評価で順位が決まってしまいます。
 
-例えば、出場者が2組で、審査員3名。審査員Aが1組目に90点、2組目に10点、審査員B,C,D,Eが1組目に90点、2組目に91点だった場合を考えます。
+簡単のために、出場者が2組で、審査員5名とします。審査員Aが1組目に90点、2組目に10点、審査員B,C,D,Eが1組目に90点、2組目に91点だった場合を考えます。
 
 | コンビ名 | 合計 | 審査員A | 審査員B | 審査員C | 審査員D | 審査員E |
 |:---------|:-----|:--------|:--------|:--------|:--------|:--------|
 | コンビX  | 450  | 90      | 90      | 90      | 90      | 90      |
 | コンビY  | 374  | 10      | 91      | 91      | 91      | 91      |
 
-5人中4人が2組目を高く評価しているのに、審査員Aが極端な点数の付け方をしているため、総合得点で評価した場合の優勝は1組目になってしまいます。
+5人中4人がコンビYを高く評価しているのに、審査員Aが極端な点数の付け方をしているため、総合得点で評価した場合の優勝は、コンビXになってしまいます。
 
-## 対応案
+## 課題への対応案：「審査員ごとの順位点」による順位づけ
 
 そこで、点数ではなく、審査員ごとの順位ベースにを集計することで、分散の影響を消すことができます。 先の例だと、審査員Aの点数だと、1組目が1位で2組目が2位。他の4人それぞれ点数だと、1組目が2位で2組目が1位です。順位を利用して総合得点をつけることで、審査員ごとの点数の幅を補正することができます。
 
@@ -41,6 +41,7 @@ editor: visual
 集計できるように、(コンテスト番号,コンビ名,審査員,点数)というデータに変形していきます。
 
 ### パッケージ読み込み
+
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 # install.packages('googlesheets4')
 # library("googlesheets4")
@@ -51,7 +52,8 @@ library("xtable")
 ```
 
 ### 各回データの整形(初回のみ)
-```{r, echo=TRUE, eval=FALSE}
+
+```{r, echo=FALSE, eval=FALSE}
 ## これは実行しない
 sheet_nums = seq(1:18)
 
@@ -68,21 +70,159 @@ for(sheet_num in sheet_nums){
 ```
 
 ### 審査結果まとめ
+
 既に作成したものを[gistに配置](https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/b4d8e86381542e5adf802514f7f7d09aa309a6e5/m1_score_detail.csv)しています。
+
 ```{r, echo=TRUE, results = "asis"}
 dat_all = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/b4d8e86381542e5adf802514f7f7d09aa309a6e5/m1_score_detail.csv")
 
-dat_all %>% head() %>% knitr::kable()
+dat_all %>% head() %>% 
+  knitr::kable(format="markdown")
 ```
 
-所望の形式のデータができていますね。
+所望の形式のデータができました。
 
 ## 集計
-では、集計していきます。
 
-TODO
+では、集計していきます。普通の合計点と、順位点での合計点を算出していきます。
+
+```{r, echo=TRUE}
+
+## 審査員ごとの順位を算出：「順位点」とする
+dat_all %>% 
+  group_by(contest_num, judge) %>% 
+  mutate(rank_score = rank(-score, ties.method = "min")) %>% 
+  select(-score) %>% 
+  ungroup() -> dat_rank
+
+
+## 順位点をマージ
+dat_all_rank = 
+  dat_all %>% merge(dat_rank, by = c("contest_num", "unit", "judge"))
+
+## 総合得点と総合順位点を算出
+dat_all_rank %>% 
+  group_by(contest_num, unit) %>% 
+  summarise(score_sum = sum(score),
+            rank_score_sum = sum(rank_score)) %>% 
+  ungroup() -> dat_all_summarized
+
+## 総合得点と総合順位点で、それぞれ順位を算出
+dat_all_summarized %>% 
+  group_by(contest_num) %>% 
+  mutate(normal_rank = rank(-score_sum, ties.method = "min")) %>% 
+  mutate(rank_score_rank = rank(rank_score_sum, ties.method = "min")) %>% 
+  ungroup() -> dat_all_summarized
+
+## ファイナルラウンド進出者を、2つの点数の両方で抽出する
+dat_finalround = 
+  dat_all_summarized %>% 
+  filter((normal_rank <= 3) | (rank_score_rank <= 3))
+
+dat_finalround %>% select(contest_num, unit, normal_rank, rank_score_rank) %>% head %>% 
+  knitr::kable(format="markdown")
+```
+
+できました。
+
+## 結果の確認
+
+さて、結果を見てみましょう。
+
+普通の得点での順位(normal_rank)と、順位点での順位(rank_score_rank)で、 ファイナルラウンド進出者の顔ぶれを確認してみます。 顔ぶれが大きく変わっていると面白そうですが、どうでしょう。
+
+3回ごとに見ていきます \### 第1-3回
+
+```{r, echo=TRUE}
+dat_finalround %>% 
+  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
+  filter(contest_num <= 3) %>% 
+  arrange(contest_num, normal_rank) %>%
+  knitr::kable(format="markdown")
+```
+
+そういえば、第1回は2組でファイナルラウンドをやっていましたね。忘れていました。とはいえ、顔ぶれは変わらず。
+
+### 第4-6回
+
+```{r, echo=TRUE}
+dat_finalround %>% 
+  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
+  filter(contest_num >= 4 & contest_num <= 6) %>% 
+  arrange(contest_num, normal_rank) %>%
+  knitr::kable(format="markdown")
+```
+
+変わっていません。
+
+### 第7-9回
+
+```{r, echo=TRUE}
+dat_finalround %>% 
+  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
+  filter(contest_num >= 7 & contest_num <= 9) %>% 
+  arrange(contest_num, normal_rank) %>% 
+  knitr::kable(format="markdown")
+  
+```
+
+はい
+
+### 第10-12回
+
+```{r, echo=TRUE}
+dat_finalround %>% 
+  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
+  filter(contest_num >= 10 & contest_num <= 12) %>% 
+  arrange(contest_num, normal_rank) %>% 
+  knitr::kable(format="markdown")
+```
+
+お？第11回は、スーパーマラドーナと銀シャリの順位が変わっていますね。 順位点ベースだったら、銀シャリよりもスーパーマラドーナが高評価です。 最終的にはトレンディエンジェルが優勝しました。
+
+### 第13-15回
+
+```{r, echo=TRUE}
+dat_finalround %>% 
+  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
+  filter(contest_num >= 13 & contest_num <= 15) %>% 
+  arrange(contest_num, normal_rank) %>% 
+  knitr::kable(format="markdown")
+```
+
+変わらず
+
+### 第16-18回
+
+```{r, echo=TRUE}
+dat_finalround %>% 
+  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
+  filter(contest_num >= 16 & contest_num <= 18) %>% 
+  arrange(contest_num, normal_rank) %>% 
+  knitr::kable(format="markdown")
+```
+
+顔ぶれは変わらず、でした。
 
 ## 考察
-TODO
+
+第11回のM1グランプリ2015では、順位に変動がありました。銀シャリ(3位)とスーパーマラドーナ(5位)の順位が入れ替わります。 [特点の詳細](https://ja.wikipedia.org/wiki/M-1%E3%82%B0%E3%83%A9%E3%83%B3%E3%83%97%E3%83%AA2015#%E3%83%95%E3%82%A1%E3%83%BC%E3%82%B9%E3%83%88%E3%83%A9%E3%82%A6%E3%83%B3%E3%83%89)を見てみると、 多くの審査員が1点程度の差をつけている中、チュートリアル徳井さんが6点差をつけています。
+
+```{r}
+dat_all_rank %>% 
+  filter(judge=="徳井") %>% 
+  select(-contest_num) %>% 
+  arrange(rank_score) %>% 
+  knitr::kable(format="markdown")
+  
+```
+
+ジャルジャルと銀シャリを特に高く評価していました。こういう評価も面白いですね。
+
 ## まとめ
-TODO
+
+点数をそのまま使うと不公平かも？と思い、順位で正規化した新しい評価点を提案してみました。 過去の審査結果に適用してみましたが、結果は現状と殆ど変わりませんでした。
+
+審査員の方々はすごいですね...。
+
+以上です。
