@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.1.189">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>M1データの前処理</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="M1_normalize_files/libs/clipboard/clipboard.min.js"></script>
+<script src="M1_normalize_files/libs/quarto-html/quarto.js"></script>
+<script src="M1_normalize_files/libs/quarto-html/popper.min.js"></script>
+<script src="M1_normalize_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="M1_normalize_files/libs/quarto-html/anchor.min.js"></script>
+<link href="M1_normalize_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="M1_normalize_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="M1_normalize_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="M1_normalize_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="M1_normalize_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">M1データの前処理</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+    
+  </div>
+  
+
+</header>
+
+<section id="m1審査の課題" class="level2">
+<h2 class="anchored" data-anchor-id="m1審査の課題">M1審査の課題</h2>
+<p>審査員が1人だけ分散が大きな評価をすると、その人の評価点で順位が決まってしまいます。</p>
+<p>例えば、出場者が2組で、審査員3名。審査員Aが1組目に90点、2組目に10点、審査員B,C,D,Eが1組目に90点、2組目に91点だった場合を考えます。</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">コンビ名</th>
+<th style="text-align: left;">合計</th>
+<th style="text-align: left;">審査員A</th>
+<th style="text-align: left;">審査員B</th>
+<th style="text-align: left;">審査員C</th>
+<th style="text-align: left;">審査員D</th>
+<th style="text-align: left;">審査員E</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">コンビX</td>
+<td style="text-align: left;">450</td>
+<td style="text-align: left;">90</td>
+<td style="text-align: left;">90</td>
+<td style="text-align: left;">90</td>
+<td style="text-align: left;">90</td>
+<td style="text-align: left;">90</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">コンビY</td>
+<td style="text-align: left;">374</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">91</td>
+<td style="text-align: left;">91</td>
+<td style="text-align: left;">91</td>
+<td style="text-align: left;">91</td>
+</tr>
+</tbody>
+</table>
+<p>5人中4人が2組目を高く評価しているのに、審査員Aが極端な点数の付け方をしているため、総合得点で評価した場合の優勝は1組目になってしまいます。</p>
+</section>
+<section id="対応案" class="level2">
+<h2 class="anchored" data-anchor-id="対応案">対応案</h2>
+<p>そこで、点数ではなく、審査員ごとの順位ベースにを集計することで、分散の影響を消すことができます。 先の例だと、審査員Aの点数だと、1組目が1位で2組目が2位。他の4人それぞれ点数だと、1組目が2位で2組目が1位です。順位を利用して総合得点をつけることで、審査員ごとの点数の幅を補正することができます。</p>
+<table class="table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">コンビ名</th>
+<th style="text-align: left;">順位合計点</th>
+<th style="text-align: left;">審査員A順位</th>
+<th style="text-align: left;">審査員B順位</th>
+<th style="text-align: left;">審査員C順位</th>
+<th style="text-align: left;">審査員D順位</th>
+<th style="text-align: left;">審査員E順位</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">コンビX</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">コンビY</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">1</td>
+</tr>
+</tbody>
+</table>
+<p>順位の数値は低い方が嬉しいことに注意しつつ計算してみると、1組目が9点(=1+2+2+2+2)で2組目が6点(=2+1+1+1+1)となり、2組目が優勝になります。</p>
+<p>低い方が嬉しいことがちょっと気持ち悪い場合は、例えば下から何番目か、などの数値を利用すれば、高い方が嬉しくなります。この辺はなんとでもなります。</p>
+</section>
+<section id="実験" class="level2">
+<h2 class="anchored" data-anchor-id="実験">実験</h2>
+<p>実際に過去のM1グランプリのデータを利用して、総合得点と提案手法とで、ファイナルラウンド進出者(上位3名)の変化を見てみます。 審査員ごとの評価点は<a href="https://ja.wikipedia.org/wiki/M-1%E3%82%B0%E3%83%A9%E3%83%B3%E3%83%97%E3%83%AA">Wikipedia</a>にありました。これを前処理して、所望のデータを作成します。</p>
+</section>
+<section id="m1データの前処理" class="level2">
+<h2 class="anchored" data-anchor-id="m1データの前処理">M1データの前処理</h2>
+<p><a href="https://docs.google.com/spreadsheets/d/12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY/edit#gid=0">とりあえずspreadsheet</a>に、生データを配置しました。</p>
+<p>集計できるように、(コンテスト番号,コンビ名,審査員,点数)というデータに変形していきます。</p>
+<section id="パッケージ読み込み" class="level3">
+<h3 class="anchored" data-anchor-id="パッケージ読み込み">パッケージ読み込み</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages('googlesheets4')</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># library("googlesheets4")</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"dplyr"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"tidyr"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"readr"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"xtable"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="各回データの整形初回のみ" class="level3">
+<h3 class="anchored" data-anchor-id="各回データの整形初回のみ">各回データの整形(初回のみ)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## これは実行しない</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>sheet_nums <span class="ot">=</span> <span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">18</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>dat_all <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="cn">NULL</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(sheet_num <span class="cf">in</span> sheet_nums){</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> <span class="fu">read_sheet</span>(<span class="at">ss=</span><span class="st">"12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY"</span>, <span class="at">sheet =</span> <span class="fu">paste</span>(<span class="st">"シート"</span>, sheet_num, <span class="at">sep=</span><span class="st">""</span>))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  dat <span class="sc">%&gt;%</span> head</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> dat <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span>コンビ名, <span class="at">names_to =</span> <span class="st">"judge"</span>, <span class="at">values_to =</span> <span class="st">"score"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>contest_num <span class="ot">=</span> sheet_num</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> dat <span class="sc">%&gt;%</span> <span class="fu">select</span>(contest_num, <span class="at">unit=</span>コンビ名, judge, score)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  dat_all <span class="ot">=</span> <span class="fu">rbind</span>(dat_all, dat)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="審査結果まとめ" class="level3">
+<h3 class="anchored" data-anchor-id="審査結果まとめ">審査結果まとめ</h3>
+<p>既に作成したものを<a href="https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/b4d8e86381542e5adf802514f7f7d09aa309a6e5/m1_score_detail.csv">gistに配置</a>しています。</p>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dat_all <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/b4d8e86381542e5adf802514f7f7d09aa309a6e5/m1_score_detail.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre><code>Rows: 1213 Columns: 4
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (2): unit, judge
+dbl (2): contest_num, score
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> <span class="fu">head</span>() <span class="sc">%&gt;%</span> knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">contest_num</th>
+<th style="text-align: left;">unit</th>
+<th style="text-align: left;">judge</th>
+<th style="text-align: right;">score</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">中川家</td>
+<td style="text-align: left;">きよし</td>
+<td style="text-align: right;">91</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">中川家</td>
+<td style="text-align: left;">青島</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">中川家</td>
+<td style="text-align: left;">小朝</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">中川家</td>
+<td style="text-align: left;">石井</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">中川家</td>
+<td style="text-align: left;">鴻上</td>
+<td style="text-align: right;">85</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">中川家</td>
+<td style="text-align: left;">松本</td>
+<td style="text-align: right;">70</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>所望の形式のデータができていますね。</p>
+</section>
+</section>
+<section id="集計" class="level2">
+<h2 class="anchored" data-anchor-id="集計">集計</h2>
+<p>では、集計していきます。</p>
+<p>TODO</p>
+</section>
+<section id="考察" class="level2">
+<h2 class="anchored" data-anchor-id="考察">考察</h2>
+<p>TODO ## まとめ TODO</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
