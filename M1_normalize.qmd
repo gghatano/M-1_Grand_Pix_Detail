@@ -23,16 +23,16 @@ editor: visual
 
 ## 課題への対応案：「審査員ごとの順位点」による順位づけ
 
-そこで、点数ではなく、審査員ごとの順位ベースにを集計することで、分散の影響を消すことができます。 先の例だと、審査員Aの点数だと、1組目が1位で2組目が2位。他の4人それぞれ点数だと、1組目が2位で2組目が1位です。順位を利用して総合得点をつけることで、審査員ごとの点数の幅を補正することができます。
+点数をそのまま利用すると、こうなります。対応策はいろいろありますが、例えば審査員ごとの順位ベースにを集計することで、分散の影響を消すことができます。 先の例だと、審査員Aの点数だと、1組目が1位で2組目が2位。他の4人それぞれ点数だと、1組目が2位で2組目が1位です。順位を利用して総合得点をつけることで、審査員ごとの点数の幅を補正することができます。
 
 | コンビ名 | 順位合計点 | 審査員A順位 | 審査員B順位 | 審査員C順位 | 審査員D順位 | 審査員E順位 |
-|:---------|:-----------|:------------|:------------|:------------|:------------|:------------|
+|:----------|:----------|:----------|:----------|:----------|:----------|:----------|
 | コンビX  | 9          | 1           | 2           | 2           | 2           | 2           |
 | コンビY  | 6          | 2           | 1           | 1           | 1           | 1           |
 
 順位の数値は低い方が嬉しいことに注意しつつ計算してみると、1組目が9点(=1+2+2+2+2)で2組目が6点(=2+1+1+1+1)となり、2組目が優勝になります。
 
-低い方が嬉しいことがちょっと気持ち悪い場合は、例えば下から何番目か、などの数値を利用すれば、高い方が嬉しくなります。この辺はなんとでもなります。
+数値が低い方が嬉しいことが気持ち悪い場合は、例えば「下から何番目か」などの数値を利用すれば、高い方が嬉しくなります。この辺はなんとでもなります。
 
 ## 実験：過去データの再集計
 
@@ -40,15 +40,15 @@ editor: visual
 
 ## M-1データの前処理・集計
 
-[とりあえずspreadsheet](https://docs.google.com/spreadsheets/d/12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY/edit#gid=0)に、生データを配置しました。
+[とりあえずspreadsheet](https://docs.google.com/spreadsheets/d/12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY/edit#gid=0)に、wikipediaに書いてあった審査結果の生データを配置しました。
 
-集計できるように、(コンテスト番号,コンビ名,審査員,点数)というデータに変形していきます。
+集計できるように、(コンテスト番号,コンビ名,出番順,審査員,点数)というデータに変形しています。
 
 ### 準備
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 # install.packages('googlesheets4')
-# library("googlesheets4")
+library("googlesheets4")
 library("dplyr")
 library("tidyr")
 library("readr")
@@ -65,21 +65,23 @@ dat_all = data.frame(NULL)
 for(sheet_num in sheet_nums){
   dat = read_sheet(ss="12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY", sheet = paste("シート", sheet_num, sep=""))
   dat %>% head
-  dat = dat %>% pivot_longer(cols = -コンビ名, names_to = "judge", values_to = "score")
+  dat = dat %>% pivot_longer(cols = -c(コンビ名,出番順), names_to = "judge", values_to = "score")
   dat$contest_num = sheet_num
-  dat = dat %>% select(contest_num, unit=コンビ名, judge, score)
+  dat = dat %>% select(contest_num, unit=コンビ名, order=出番順,judge, score)
   dat_all = rbind(dat_all, dat)
 }
 
+dat_all %>% write.csv("m1_judge_detail.csv", row.names = FALSE, quote=FALSE)
 ```
 
 ### 前処理結果の確認
 
-既に作成したものを[gistに配置](https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/b4d8e86381542e5adf802514f7f7d09aa309a6e5/m1_score_detail.csv)しています。
+既に作成したものを[gistに配置](https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv)していますので、それを読み込みます。
 
-```{r, echo=TRUE, results = "asis"}
-dat_all = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/b4d8e86381542e5adf802514f7f7d09aa309a6e5/m1_score_detail.csv")
+```{r, echo=TRUE, results = "asis", message=FALSE}
+dat_all = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv")
 
+dat_all %>% select(-order) -> dat_all
 dat_all %>% head() %>% 
   knitr::kable(format="markdown")
 ```
@@ -90,8 +92,7 @@ dat_all %>% head() %>%
 
 では、集計していきます。普通の合計点と、順位点での合計点を算出していきます。
 
-```{r, echo=TRUE}
-
+```{r, echo=TRUE, message=FALSE}
 ## 審査員ごとの順位を算出：「順位点」とする
 dat_all %>% 
   group_by(contest_num, judge) %>% 
@@ -232,5 +233,7 @@ dat_all_rank %>%
 点数をそのまま使うと不公平かも？と思い、順位で正規化した新しい評価点を提案してみました。 過去の審査結果に適用してみましたが、結果は現状と殆ど変わりませんでした。
 
 審査員の方々はすごいですね...。
+
+次は出番順のデータも使った分析をしてみようと思います。
 
 以上です。
