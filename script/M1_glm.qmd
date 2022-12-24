@@ -1,0 +1,26 @@
+---
+title: "M1データの分析"
+format: html
+editor: visual
+---
+
+## データの検証
+
+[先行研究](https://github.com/JaehyunSong/M-1_Grand_Pix)の再現をしてみます。
+出番順の影響を可視化します。
+
+## データ読み込み
+
+```{r, echo=TRUE, message=FALSE}
+library("readr")
+library("dplyr")
+```
+
+```{r, echo=TRUE, message=FALSE}
+dat_master = read_csv("https://raw.githubusercontent.com/JaehyunSong/M-1_Grand_Pix/main/M1_Grand_Pix.csv")
+dat_tran = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv")
+
+dat_master %>% head
+dat_tran %>% head
+}
+```

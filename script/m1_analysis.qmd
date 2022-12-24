@@ -1,0 +1,35 @@
+---
+title: "M1データの分析(線形回帰)"
+format: html
+editor: visual
+---
+
+## 既存研究
+[]()があったので、まずは両者でデータの正確さを確認します。
+
+```{r, eval=TRUE, echo=TRUE,message=FALSE}
+library("dplyr")
+library("readr")
+```
+
+
+```{r}
+dat_tran = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/d86c1af1dce74ff4afe879e22852f96601ffec51/m1_score.detail.csv")
+
+dat_master = read_csv("https://raw.githubusercontent.com/JaehyunSong/M-1_Grand_Pix/main/M1_Grand_Pix.csv")
+
+
+dat_tran %>% 
+  group_by(Year, Name) %>% 
+  summarise(Score_ = sum(Score)) %>% 
+  select(Year, Name, Score_) -> dat_summarised
+  
+
+dat_master %>% 
+  merge(dat_summarised, by=c("Year", "Name")) %>%
+  arrange(ID) -> dat_merged
+
+## 確認
+all.equal(dat_merged$Score10, dat_merged$Score_)
+```
+

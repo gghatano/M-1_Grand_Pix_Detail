@@ -42,7 +42,7 @@ editor: visual
 
 [とりあえずspreadsheet](https://docs.google.com/spreadsheets/d/12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY/edit#gid=0)に、wikipediaに書いてあった審査結果の生データを配置しました。
 
-集計できるように、(コンテスト番号,コンビ名,出番順,審査員,点数)というデータに変形しています。
+集計できるように、(年,コンビ名,出番順,審査員,点数)というデータに変形しています。
 
 ### 準備
 
@@ -64,24 +64,29 @@ sheet_nums = seq(1:18)
 dat_all = data.frame(NULL)
 for(sheet_num in sheet_nums){
   dat = read_sheet(ss="12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY", sheet = paste("シート", sheet_num, sep=""))
-  dat %>% head
-  dat = dat %>% pivot_longer(cols = -c(コンビ名,出番順), names_to = "judge", values_to = "score")
-  dat$contest_num = sheet_num
-  dat = dat %>% select(contest_num, unit=コンビ名, order=出番順,judge, score)
+  dat = dat %>% pivot_longer(cols = -c(コンビ名,出番順), names_to = "Judge", values_to = "Score")
+  dat$No = sheet_num
+  dat = dat %>% select(No, Name=コンビ名, Order=出番順,Judge, Score)
+  dat %>%
+    mutate(Year = if_else(No <= 10, No + 2000, No + 2004)) -> dat
   dat_all = rbind(dat_all, dat)
 }
 
-dat_all %>% write.csv("m1_judge_detail.csv", row.names = FALSE, quote=FALSE)
+dat_all %>% 
+  select(No, Year, Order, Name, Judge, Score) %>% 
+  arrange(No, Year, Order) %>% 
+  write.csv("../data/m1_score_detail.csv", row.names = FALSE, quote=FALSE)
 ```
 
-### 前処理結果の確認
 
-既に作成したものを[gistに配置](https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv)していますので、それを読み込みます。
+
+既に作成したものを[gistに配置](https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/d86c1af1dce74ff4afe879e22852f96601ffec51/m1_score.detail.csv)していますので、それを読み込みます。
 
 ```{r, echo=TRUE, results = "asis", message=FALSE}
-dat_all = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv")
+dat_all = read_csv("https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/d86c1af1dce74ff4afe879e22852f96601ffec51/m1_score.detail.csv")
 
-dat_all %>% select(-order) -> dat_all
+
+dat_all %>% select(-No) -> dat_all
 dat_all %>% head() %>% 
   knitr::kable(format="markdown")
 ```
@@ -95,36 +100,41 @@ dat_all %>% head() %>%
 ```{r, echo=TRUE, message=FALSE}
 ## 審査員ごとの順位を算出：「順位点」とする
 dat_all %>% 
-  group_by(contest_num, judge) %>% 
-  mutate(rank_score = rank(-score, ties.method = "min")) %>% 
-  select(-score) %>% 
+  group_by(Year, Judge) %>% 
+  mutate(Rank_Score = rank(-Score, ties.method = "min")) %>% 
+  select(-Score) %>% 
   ungroup() -> dat_rank
 
 
 ## 順位点をマージ
 dat_all_rank = 
-  dat_all %>% merge(dat_rank, by = c("contest_num", "unit", "judge"))
+  dat_all %>% merge(dat_rank, by = c("Year", "Name", "Judge", "Order"))
 
 ## 総合得点と総合順位点を算出
 dat_all_rank %>% 
-  group_by(contest_num, unit) %>% 
-  summarise(score_sum = sum(score),
-            rank_score_sum = sum(rank_score)) %>% 
+  group_by(Year, Name) %>% 
+  summarise(Score_Sum = sum(Score),
+            Rank_Score_Sum = sum(Rank_Score)) %>% 
   ungroup() -> dat_all_summarized
 
 ## 総合得点と総合順位点で、それぞれ順位を算出
 dat_all_summarized %>% 
-  group_by(contest_num) %>% 
-  mutate(normal_rank = rank(-score_sum, ties.method = "min")) %>% 
-  mutate(rank_score_rank = rank(rank_score_sum, ties.method = "min")) %>% 
+  group_by(Year) %>% 
+  mutate(Normal_Rank = rank(-Score_Sum, ties.method = "min")) %>% 
+  mutate(Rank_Score_Rank = rank(Rank_Score_Sum, ties.method = "min")) %>% 
   ungroup() -> dat_all_summarized
+
 
 ## ファイナルラウンド進出者を、2つの点数の両方で抽出する
 dat_finalround = 
   dat_all_summarized %>% 
-  filter((normal_rank <= 3) | (rank_score_rank <= 3))
+  filter((Normal_Rank <= 3) | (Rank_Score_Rank <= 3))
 
-dat_finalround %>% select(contest_num, unit, normal_rank, rank_score_rank) %>% head %>% 
+dat_finalround %>% select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  arrange(Year, Normal_Rank) -> dat_finalround
+dat_finalround %>% 
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  head() %>% 
   knitr::kable(format="markdown")
 ```
 
@@ -142,9 +152,8 @@ dat_finalround %>% select(contest_num, unit, normal_rank, rank_score_rank) %>% h
 
 ```{r, echo=TRUE}
 dat_finalround %>% 
-  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
-  filter(contest_num <= 3) %>% 
-  arrange(contest_num, normal_rank) %>%
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  filter((Year >= 2001) & (2003 >= Year)) %>% 
   knitr::kable(format="markdown")
 ```
 
@@ -154,9 +163,8 @@ dat_finalround %>%
 
 ```{r, echo=TRUE}
 dat_finalround %>% 
-  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
-  filter(contest_num >= 4 & contest_num <= 6) %>% 
-  arrange(contest_num, normal_rank) %>%
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  filter((Year >= 2004) & (2006 >= Year)) %>% 
   knitr::kable(format="markdown")
 ```
 
@@ -166,11 +174,9 @@ dat_finalround %>%
 
 ```{r, echo=TRUE}
 dat_finalround %>% 
-  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
-  filter(contest_num >= 7 & contest_num <= 9) %>% 
-  arrange(contest_num, normal_rank) %>% 
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  filter((Year >= 2007) & (2009 >= Year)) %>% 
   knitr::kable(format="markdown")
-  
 ```
 
 はい
@@ -179,9 +185,8 @@ dat_finalround %>%
 
 ```{r, echo=TRUE}
 dat_finalround %>% 
-  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
-  filter(contest_num >= 10 & contest_num <= 12) %>% 
-  arrange(contest_num, normal_rank) %>% 
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  filter((Year >= 2010) & (2016 >= Year)) %>% 
   knitr::kable(format="markdown")
 ```
 
@@ -191,9 +196,8 @@ dat_finalround %>%
 
 ```{r, echo=TRUE}
 dat_finalround %>% 
-  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
-  filter(contest_num >= 13 & contest_num <= 15) %>% 
-  arrange(contest_num, normal_rank) %>% 
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  filter((Year >= 2017) & (2019 >= Year)) %>% 
   knitr::kable(format="markdown")
 ```
 
@@ -203,9 +207,8 @@ dat_finalround %>%
 
 ```{r, echo=TRUE}
 dat_finalround %>% 
-  select(contest_num, unit, normal_rank, rank_score_rank) %>% 
-  filter(contest_num >= 16 & contest_num <= 18) %>% 
-  arrange(contest_num, normal_rank) %>% 
+  select(Year, Name, Normal_Rank, Rank_Score_Rank) %>% 
+  filter((Year >= 2020) & (2022 >= Year)) %>% 
   knitr::kable(format="markdown")
 ```
 
@@ -219,9 +222,8 @@ dat_finalround %>%
 
 ```{r, echo=TRUE}
 dat_all_rank %>% 
-  filter(judge=="徳井") %>% 
-  select(-contest_num) %>% 
-  arrange(rank_score) %>% 
+  filter(Judge=="徳井" & Year == 2015) %>% 
+  arrange(Rank_Score) %>% 
   knitr::kable(format="markdown")
   
 ```

@@ -220,7 +220,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="m-1データの前処理集計" class="level2">
 <h2 class="anchored" data-anchor-id="m-1データの前処理集計">M-1データの前処理・集計</h2>
 <p><a href="https://docs.google.com/spreadsheets/d/12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY/edit#gid=0">とりあえずspreadsheet</a>に、wikipediaに書いてあった審査結果の生データを配置しました。</p>
-<p>集計できるように、(コンテスト番号,コンビ名,出番順,審査員,点数)というデータに変形しています。</p>
+<p>集計できるように、(年,コンビ名,出番順,審査員,点数)というデータに変形しています。</p>
 <section id="準備" class="level3">
 <h3 class="anchored" data-anchor-id="準備">準備</h3>
 <div class="cell">
@@ -241,66 +241,75 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>dat_all <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="cn">NULL</span>)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(sheet_num <span class="cf">in</span> sheet_nums){</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> <span class="fu">read_sheet</span>(<span class="at">ss=</span><span class="st">"12JcpUWepZ6qqvxiT_-6eswfHO4pbxc_HvThU2P2ztNY"</span>, <span class="at">sheet =</span> <span class="fu">paste</span>(<span class="st">"シート"</span>, sheet_num, <span class="at">sep=</span><span class="st">""</span>))</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  dat <span class="sc">%&gt;%</span> head</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> dat <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span><span class="fu">c</span>(コンビ名,出番順), <span class="at">names_to =</span> <span class="st">"judge"</span>, <span class="at">values_to =</span> <span class="st">"score"</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>contest_num <span class="ot">=</span> sheet_num</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> dat <span class="sc">%&gt;%</span> <span class="fu">select</span>(contest_num, <span class="at">unit=</span>コンビ名, <span class="at">order=</span>出番順,judge, score)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  dat_all <span class="ot">=</span> <span class="fu">rbind</span>(dat_all, dat)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> <span class="fu">write.csv</span>(<span class="st">"m1_judge_detail.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">quote=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> dat <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span><span class="fu">c</span>(コンビ名,出番順), <span class="at">names_to =</span> <span class="st">"Judge"</span>, <span class="at">values_to =</span> <span class="st">"Score"</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  dat<span class="sc">$</span>No <span class="ot">=</span> sheet_num</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">=</span> dat <span class="sc">%&gt;%</span> <span class="fu">select</span>(No, <span class="at">Name=</span>コンビ名, <span class="at">Order=</span>出番順,Judge, Score)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  dat <span class="sc">%&gt;%</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Year =</span> <span class="fu">if_else</span>(No <span class="sc">&lt;=</span> <span class="dv">10</span>, No <span class="sc">+</span> <span class="dv">2000</span>, No <span class="sc">+</span> <span class="dv">2004</span>)) <span class="ot">-&gt;</span> dat</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  dat_all <span class="ot">=</span> <span class="fu">rbind</span>(dat_all, dat)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> </span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(No, Year, Order, Name, Judge, Score) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(No, Year, Order) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write.csv</span>(<span class="st">"../data/m1_score_detail.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>, <span class="at">quote=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section id="前処理結果の確認" class="level3">
-<h3 class="anchored" data-anchor-id="前処理結果の確認">前処理結果の確認</h3>
-<p>既に作成したものを<a href="https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv">gistに配置</a>していますので、それを読み込みます。</p>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dat_all <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/845605fe55ecc628927c39270530eec2c7b7db48/m1_score_detail.csv"</span>)</span>
+<p>既に作成したものを<a href="https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/d86c1af1dce74ff4afe879e22852f96601ffec51/m1_score.detail.csv">gistに配置</a>していますので、それを読み込みます。</p>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dat_all <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"https://gist.githubusercontent.com/gghatano/092a9f7089451de743f39a53dda24423/raw/d86c1af1dce74ff4afe879e22852f96601ffec51/m1_score.detail.csv"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>order) <span class="ot">-&gt;</span> dat_all</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> <span class="fu">head</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>No) <span class="ot">-&gt;</span> dat_all</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> <span class="fu">head</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: left;">judge</th>
-<th style="text-align: right;">score</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: right;">Order</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Judge</th>
+<th style="text-align: right;">Score</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: right;">2001</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: left;">きよし</td>
 <td style="text-align: right;">91</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2001</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: left;">青島</td>
 <td style="text-align: right;">90</td>
 </tr>
 <tr class="odd">
+<td style="text-align: right;">2001</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: left;">小朝</td>
 <td style="text-align: right;">90</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2001</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: left;">石井</td>
 <td style="text-align: right;">90</td>
 </tr>
 <tr class="odd">
+<td style="text-align: right;">2001</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: left;">鴻上</td>
 <td style="text-align: right;">85</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2001</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: left;">松本</td>
@@ -318,80 +327,85 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 審査員ごとの順位を算出：「順位点」とする</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>dat_all <span class="sc">%&gt;%</span> </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(contest_num, judge) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rank_score =</span> <span class="fu">rank</span>(<span class="sc">-</span>score, <span class="at">ties.method =</span> <span class="st">"min"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>score) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Year, Judge) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Rank_Score =</span> <span class="fu">rank</span>(<span class="sc">-</span>Score, <span class="at">ties.method =</span> <span class="st">"min"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Score) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="ot">-&gt;</span> dat_rank</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="do">## 順位点をマージ</span></span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>dat_all_rank <span class="ot">=</span> </span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  dat_all <span class="sc">%&gt;%</span> <span class="fu">merge</span>(dat_rank, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"contest_num"</span>, <span class="st">"unit"</span>, <span class="st">"judge"</span>))</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  dat_all <span class="sc">%&gt;%</span> <span class="fu">merge</span>(dat_rank, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"Year"</span>, <span class="st">"Name"</span>, <span class="st">"Judge"</span>, <span class="st">"Order"</span>))</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="do">## 総合得点と総合順位点を算出</span></span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>dat_all_rank <span class="sc">%&gt;%</span> </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(contest_num, unit) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">score_sum =</span> <span class="fu">sum</span>(score),</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">rank_score_sum =</span> <span class="fu">sum</span>(rank_score)) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Year, Name) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">Score_Sum =</span> <span class="fu">sum</span>(Score),</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">Rank_Score_Sum =</span> <span class="fu">sum</span>(Rank_Score)) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="ot">-&gt;</span> dat_all_summarized</span>
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="do">## 総合得点と総合順位点で、それぞれ順位を算出</span></span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>dat_all_summarized <span class="sc">%&gt;%</span> </span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(contest_num) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">normal_rank =</span> <span class="fu">rank</span>(<span class="sc">-</span>score_sum, <span class="at">ties.method =</span> <span class="st">"min"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rank_score_rank =</span> <span class="fu">rank</span>(rank_score_sum, <span class="at">ties.method =</span> <span class="st">"min"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Year) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Normal_Rank =</span> <span class="fu">rank</span>(<span class="sc">-</span>Score_Sum, <span class="at">ties.method =</span> <span class="st">"min"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Rank_Score_Rank =</span> <span class="fu">rank</span>(Rank_Score_Sum, <span class="at">ties.method =</span> <span class="st">"min"</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="ot">-&gt;</span> dat_all_summarized</span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="do">## ファイナルラウンド進出者を、2つの点数の両方で抽出する</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="ot">=</span> </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  dat_all_summarized <span class="sc">%&gt;%</span> </span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((normal_rank <span class="sc">&lt;=</span> <span class="dv">3</span>) <span class="sc">|</span> (rank_score_rank <span class="sc">&lt;=</span> <span class="dv">3</span>))</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> head <span class="sc">%&gt;%</span> </span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="do">## ファイナルラウンド進出者を、2つの点数の両方で抽出する</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="ot">=</span> </span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  dat_all_summarized <span class="sc">%&gt;%</span> </span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Normal_Rank <span class="sc">&lt;=</span> <span class="dv">3</span>) <span class="sc">|</span> (Rank_Score_Rank <span class="sc">&lt;=</span> <span class="dv">3</span>))</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Year, Normal_Rank) <span class="ot">-&gt;</span> dat_finalround</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">アメリカザリガニ</td>
-<td style="text-align: right;">3</td>
-<td style="text-align: right;">3</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">1</td>
-<td style="text-align: left;">ハリガネロック</td>
-<td style="text-align: right;">2</td>
-<td style="text-align: right;">2</td>
-</tr>
-<tr class="odd">
-<td style="text-align: right;">1</td>
+<td style="text-align: right;">2001</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2001</td>
+<td style="text-align: left;">ハリガネロック</td>
 <td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2001</td>
+<td style="text-align: left;">アメリカザリガニ</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2002</td>
 <td style="text-align: left;">フットボールアワー</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">2002</td>
 <td style="text-align: left;">ますだおかだ</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">2002</td>
 <td style="text-align: left;">笑い飯</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
@@ -411,71 +425,70 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="第1-3回">第1-3回</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(contest_num <span class="sc">&lt;=</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(contest_num, normal_rank) <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Year <span class="sc">&gt;=</span> <span class="dv">2001</span>) <span class="sc">&amp;</span> (<span class="dv">2003</span> <span class="sc">&gt;=</span> Year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">1</td>
+<td style="text-align: right;">2001</td>
 <td style="text-align: left;">中川家</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">1</td>
+<td style="text-align: right;">2001</td>
 <td style="text-align: left;">ハリガネロック</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">1</td>
+<td style="text-align: right;">2001</td>
 <td style="text-align: left;">アメリカザリガニ</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">2002</td>
 <td style="text-align: left;">フットボールアワー</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">2002</td>
 <td style="text-align: left;">ますだおかだ</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">2002</td>
 <td style="text-align: left;">笑い飯</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">2003</td>
 <td style="text-align: left;">フットボールアワー</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">2003</td>
 <td style="text-align: left;">笑い飯</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">2003</td>
 <td style="text-align: left;">アンタッチャブル</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
@@ -490,71 +503,70 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="第4-6回">第4-6回</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(contest_num <span class="sc">&gt;=</span> <span class="dv">4</span> <span class="sc">&amp;</span> contest_num <span class="sc">&lt;=</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(contest_num, normal_rank) <span class="sc">%&gt;%</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Year <span class="sc">&gt;=</span> <span class="dv">2004</span>) <span class="sc">&amp;</span> (<span class="dv">2006</span> <span class="sc">&gt;=</span> Year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">2004</td>
 <td style="text-align: left;">アンタッチャブル</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">2004</td>
 <td style="text-align: left;">南海キャンディーズ</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">2004</td>
 <td style="text-align: left;">麒麟</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">2005</td>
 <td style="text-align: left;">ブラックマヨネーズ</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">2005</td>
 <td style="text-align: left;">麒麟</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">2005</td>
 <td style="text-align: left;">笑い飯</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">2006</td>
 <td style="text-align: left;">チュートリアル</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">2006</td>
 <td style="text-align: left;">フットボールアワー</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">6</td>
+<td style="text-align: right;">2006</td>
 <td style="text-align: left;">麒麟</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
@@ -569,71 +581,70 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="第7-9回">第7-9回</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(contest_num <span class="sc">&gt;=</span> <span class="dv">7</span> <span class="sc">&amp;</span> contest_num <span class="sc">&lt;=</span> <span class="dv">9</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(contest_num, normal_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Year <span class="sc">&gt;=</span> <span class="dv">2007</span>) <span class="sc">&amp;</span> (<span class="dv">2009</span> <span class="sc">&gt;=</span> Year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">2007</td>
 <td style="text-align: left;">サンドウィッチマン</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">2007</td>
 <td style="text-align: left;">キングコング</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">2007</td>
 <td style="text-align: left;">トータルテンボス</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">2008</td>
 <td style="text-align: left;">オードリー</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">2008</td>
 <td style="text-align: left;">NON STYLE</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">2008</td>
 <td style="text-align: left;">ナイツ</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">2009</td>
 <td style="text-align: left;">笑い飯</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">2009</td>
 <td style="text-align: left;">パンクブーブー</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">2009</td>
 <td style="text-align: left;">NON STYLE</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
@@ -648,77 +659,76 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="第10-12回">第10-12回</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(contest_num <span class="sc">&gt;=</span> <span class="dv">10</span> <span class="sc">&amp;</span> contest_num <span class="sc">&lt;=</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(contest_num, normal_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Year <span class="sc">&gt;=</span> <span class="dv">2010</span>) <span class="sc">&amp;</span> (<span class="dv">2016</span> <span class="sc">&gt;=</span> Year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">2010</td>
 <td style="text-align: left;">パンクブーブー</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">2010</td>
 <td style="text-align: left;">笑い飯</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">10</td>
+<td style="text-align: right;">2010</td>
 <td style="text-align: left;">スリムクラブ</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">ジャルジャル</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">トレンディエンジェル</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">銀シャリ</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">5</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">11</td>
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">スーパーマラドーナ</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">12</td>
+<td style="text-align: right;">2016</td>
 <td style="text-align: left;">銀シャリ</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">12</td>
+<td style="text-align: right;">2016</td>
 <td style="text-align: left;">和牛</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">12</td>
+<td style="text-align: right;">2016</td>
 <td style="text-align: left;">スーパーマラドーナ</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
@@ -733,71 +743,70 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="第13-15回">第13-15回</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(contest_num <span class="sc">&gt;=</span> <span class="dv">13</span> <span class="sc">&amp;</span> contest_num <span class="sc">&lt;=</span> <span class="dv">15</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(contest_num, normal_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Year <span class="sc">&gt;=</span> <span class="dv">2017</span>) <span class="sc">&amp;</span> (<span class="dv">2019</span> <span class="sc">&gt;=</span> Year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">13</td>
+<td style="text-align: right;">2017</td>
 <td style="text-align: left;">和牛</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">13</td>
+<td style="text-align: right;">2017</td>
 <td style="text-align: left;">ミキ</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">13</td>
+<td style="text-align: right;">2017</td>
 <td style="text-align: left;">とろサーモン</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">2018</td>
 <td style="text-align: left;">霜降り明星</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">2018</td>
 <td style="text-align: left;">和牛</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">14</td>
+<td style="text-align: right;">2018</td>
 <td style="text-align: left;">ジャルジャル</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">15</td>
+<td style="text-align: right;">2019</td>
 <td style="text-align: left;">ミルクボーイ</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">15</td>
+<td style="text-align: right;">2019</td>
 <td style="text-align: left;">かまいたち</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">15</td>
+<td style="text-align: right;">2019</td>
 <td style="text-align: left;">ぺこぱ</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
@@ -812,71 +821,70 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h3 class="anchored" data-anchor-id="第16-18回">第16-18回</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dat_finalround <span class="sc">%&gt;%</span> </span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(contest_num, unit, normal_rank, rank_score_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(contest_num <span class="sc">&gt;=</span> <span class="dv">16</span> <span class="sc">&amp;</span> contest_num <span class="sc">&lt;=</span> <span class="dv">18</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(contest_num, normal_rank) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Year, Name, Normal_Rank, Rank_Score_Rank) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>((Year <span class="sc">&gt;=</span> <span class="dv">2020</span>) <span class="sc">&amp;</span> (<span class="dv">2022</span> <span class="sc">&gt;=</span> Year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: right;">contest_num</th>
-<th style="text-align: left;">unit</th>
-<th style="text-align: right;">normal_rank</th>
-<th style="text-align: right;">rank_score_rank</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: right;">Normal_Rank</th>
+<th style="text-align: right;">Rank_Score_Rank</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">2020</td>
 <td style="text-align: left;">おいでやすこが</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">2020</td>
 <td style="text-align: left;">マヂカルラブリー</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">2020</td>
 <td style="text-align: left;">見取り図</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">17</td>
+<td style="text-align: right;">2021</td>
 <td style="text-align: left;">オズワルド</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">17</td>
+<td style="text-align: right;">2021</td>
 <td style="text-align: left;">インディアンス</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">17</td>
+<td style="text-align: right;">2021</td>
 <td style="text-align: left;">錦鯉</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">18</td>
+<td style="text-align: right;">2022</td>
 <td style="text-align: left;">さや香</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">18</td>
+<td style="text-align: right;">2022</td>
 <td style="text-align: left;">ロングコートダディ</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">18</td>
+<td style="text-align: right;">2022</td>
 <td style="text-align: left;">ウエストランド</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">2</td>
@@ -895,72 +903,91 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>第11回のM1グランプリ2015では、順位に変動がありました。銀シャリ(3位)とスーパーマラドーナ(5位)の順位が入れ替わります。 <a href="https://ja.wikipedia.org/wiki/M-1%E3%82%B0%E3%83%A9%E3%83%B3%E3%83%97%E3%83%AA2015#%E3%83%95%E3%82%A1%E3%83%BC%E3%82%B9%E3%83%88%E3%83%A9%E3%82%A6%E3%83%B3%E3%83%89">得点の詳細</a>を見てみると、 多くの審査員が1点程度の差をつけている中、チュートリアル徳井さんが6点差をつけています。</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dat_all_rank <span class="sc">%&gt;%</span> </span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(judge<span class="sc">==</span><span class="st">"徳井"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>contest_num) <span class="sc">%&gt;%</span> </span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(rank_score) <span class="sc">%&gt;%</span> </span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Judge<span class="sc">==</span><span class="st">"徳井"</span> <span class="sc">&amp;</span> Year <span class="sc">==</span> <span class="dv">2015</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Rank_Score) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">format=</span><span class="st">"markdown"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped">
 <thead>
 <tr class="header">
-<th style="text-align: left;">unit</th>
-<th style="text-align: left;">judge</th>
-<th style="text-align: right;">score</th>
-<th style="text-align: right;">rank_score</th>
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Judge</th>
+<th style="text-align: right;">Order</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">Rank_Score</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">ジャルジャル</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">5</td>
 <td style="text-align: right;">96</td>
 <td style="text-align: right;">1</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">銀シャリ</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">6</td>
 <td style="text-align: right;">95</td>
 <td style="text-align: right;">2</td>
 </tr>
 <tr class="odd">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">メイプル超合金</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: right;">91</td>
 <td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">和牛</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">4</td>
 <td style="text-align: right;">90</td>
 <td style="text-align: right;">4</td>
 </tr>
 <tr class="odd">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">スーパーマラドーナ</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">3</td>
 <td style="text-align: right;">89</td>
 <td style="text-align: right;">5</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">ハライチ</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">7</td>
 <td style="text-align: right;">89</td>
 <td style="text-align: right;">5</td>
 </tr>
 <tr class="odd">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">馬鹿よ貴方は</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">2</td>
 <td style="text-align: right;">89</td>
 <td style="text-align: right;">5</td>
 </tr>
 <tr class="even">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">タイムマシーン3号</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">8</td>
 <td style="text-align: right;">88</td>
 <td style="text-align: right;">8</td>
 </tr>
 <tr class="odd">
+<td style="text-align: right;">2015</td>
 <td style="text-align: left;">トレンディエンジェル</td>
 <td style="text-align: left;">徳井</td>
+<td style="text-align: right;">9</td>
 <td style="text-align: right;">88</td>
 <td style="text-align: right;">8</td>
 </tr>
